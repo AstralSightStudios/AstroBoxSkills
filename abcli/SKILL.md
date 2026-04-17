@@ -54,6 +54,7 @@ Do **not** use abcli when:
 | Refresh provider | `npx astrobox-cli provider refresh <name>` |
 | Total items | `npx astrobox-cli provider total <name>` |
 | Browse page | `npx astrobox-cli provider page <name> --category ... --sort time` |
+| Search by keyword | `npx astrobox-cli provider page <name> --keyword <keyword>` |
 | Item detail | `npx astrobox-cli provider item <name> <id>` |
 | Download link | `npx astrobox-cli provider download <name> --id <id> --device <key>` |
 | Install local file | `npx astrobox-cli install <path>` |
@@ -75,12 +76,38 @@ npx astrobox-cli device show 3C:AF:B7:ED:C6:92      # verify
 
 ```bash
 npx astrobox-cli provider list                        # pick provider
-npx astrobox-cli provider categories OfficialV2       # pick category
+npx astrobox-cli provider refresh OfficialV2          # refresh cache before search
 npx astrobox-cli provider page OfficialV2 \
-  --category watchface --sort time --limit 10         # browse
-npx astrobox-cli provider item OfficialV2 <id>        # inspect details
+  --keyword "search-term" --limit 20                 # search by keyword
+npx astrobox-cli provider item OfficialV2 <id>        # inspect details, get device key
 npx astrobox-cli provider download OfficialV2 \
-  --id <id> --device xmb9p                           # get download URL
+  --id <id> --device <key>                           # get download URL
+```
+
+### Workflow: Full install (search → download → install)
+
+```bash
+# 1. Check AstroBox and list devices
+npx astrobox-cli status
+npx astrobox-cli device list
+
+# 2. If device is disconnected, get authkey from saved device and reconnect
+npx astrobox-cli device show <addr>                   # extracts authkey
+npx astrobox-cli device connect \
+  --name "<name>" --addr "<addr>" --authkey "<key>"
+
+# 3. Search, download, and install the resource
+npx astrobox-cli provider refresh OfficialV2
+npx astrobox-cli provider page OfficialV2 --keyword "<name>" --limit 20
+npx astrobox-cli provider item OfficialV2 <id>        # note the device key from Downloads
+npx astrobox-cli provider download OfficialV2 \
+  --id <id> --device <key>
+
+# 4. Download the file (url may need URL-encoding for spaces)
+curl -L -o "resource.bin" "<download-url>"
+
+# 5. Install through AstroBox
+npx astrobox-cli install "./resource.bin"
 ```
 
 ### Workflow: Check AstroBox health
@@ -99,6 +126,15 @@ Key patterns:
 - **Device lines**: `- <name> (<addr>) [<status>]`
 - **Page items**: `[<restype>] <name>\n  id: <id>`
 - **Provider download**: `  <field>: <value>`
+
+## Important notes
+
+- **Always refresh before searching**: `provider refresh <name>` before using `--keyword`, especially for OfficialV2. Provider caches can be stale.
+- **Use `--keyword` for name searches**: Do NOT pipe `provider page` through `grep`. Use the built-in `--keyword` flag.
+- **Get authkey from `device show`**: If a device is already saved but disconnected, `device show <addr>` reveals its authkey. No need to ask the user.
+- **Device key comes from `provider item`**: The `Downloads:` section lists device keys like `xmb9p`, `xmb10`, `xmrw5`. Use the correct one in `provider download --device <key>`.
+- **Install returns "queued"**: `npx astrobox-cli install` outputs `{"ok": true, "message": "queued"}`. The actual transfer happens asynchronously. Check the device screen for progress.
+- **npx concurrency**: Running multiple `npx astrobox-cli` commands simultaneously can cause npm cache conflicts (`ENOTEMPTY`). If this happens, clear `~/.npm/_npx/*` and retry.
 
 ## Error handling
 

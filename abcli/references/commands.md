@@ -60,7 +60,16 @@ npx astrobox-cli install /absolute/path/to/file.bin
 **Arguments:**
 - `<path>` — Path to local file, resolved from current working directory
 
-**Output:** JSON response from AstroBox (varies by file type).
+**Output:** JSON response indicating the install has been queued.
+
+```json
+{
+  "ok": true,
+  "message": "queued"
+}
+```
+
+The actual file transfer happens asynchronously. Check the physical device screen for progress indicators.
 
 ---
 
@@ -250,7 +259,7 @@ npx astrobox-cli provider page OfficialV2 --keyword "miku" --sort name
 **Options:**
 - `--page <page>` — Page number (default: `1`)
 - `--limit <limit>` — Items per page (default: `20`)
-- `--keyword <keyword>` — Search keyword
+- `--keyword <keyword>` — Search keyword (preferred over piping through grep)
 - `--category <category>` — Comma-separated category filter
 - `--sort <sort>` — Sort order: `time`, `name`, or `random` (default: `time`)
 

@@ -80,6 +80,15 @@ Common errors, what they mean, and how to recover.
 
 ---
 
+## `ENOTEMPTY` or npm cache rename errors
+
+**Meaning:** Multiple `npx astrobox-cli` processes ran concurrently, causing npm's npx cache directory to conflict.
+
+**Recovery:**
+1. Clear the npx cache: `rm -rf ~/.npm/_npx/*`
+2. Retry the command.
+3. Avoid running multiple `npx astrobox-cli` commands in parallel when possible.
+
 ## General troubleshooting checklist
 
 1. **Is AstroBox running?** → `npx astrobox-cli status`
