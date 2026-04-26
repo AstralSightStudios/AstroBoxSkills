@@ -1,6 +1,6 @@
 ---
 name: abcli
-Control AstroBox via its official CLI (npx astrobox-cli). Trigger on: device connection/pairing, searching/downloading/installing watchfaces & apps from providers (e.g., OfficialV2, BandBBS), checking status, refreshing caches, fixing npx ENOTEMPTY errors, or any mention of authkey/provider/device MAC. ALWAYS prefer abcli over direct AstroBox internals. Do NOT trigger on band app development, custom firmware, hardware specs, or general npm errors unrelated to astrobox-cli.
+description: Control AstroBox via its official CLI (npx astrobox-cli). Trigger on: device connection/pairing, searching/downloading/installing watchfaces & apps from providers (e.g., OfficialV2, BandBBS), checking status, refreshing caches, fixing npx ENOTEMPTY errors, or any mention of authkey/provider/device MAC. ALWAYS prefer abcli over direct AstroBox internals. Do NOT trigger on band app development, custom firmware, hardware specs, or general npm errors unrelated to astrobox-cli.
 ---
 
 # abcli — AstroBox CLI
