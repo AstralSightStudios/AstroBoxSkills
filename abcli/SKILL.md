@@ -45,8 +45,16 @@ User request
 │   ├─ npx astrobox-cli provider item OfficialV2 <id>
 │   └─ npx astrobox-cli provider download OfficialV2 --id <id> --device <key>
 │
-├─ "Install a local file"
-│   └─ npx astrobox-cli install <path>
+├─ "Install a local file (or track install progress)"
+│   ├─ npx astrobox-cli install <path>              (queued, async)
+│   ├─ npx astrobox-cli install <path> --wait       (live progress table)
+│   └─ npx astrobox-cli queue status                (check queue state)
+│
+├─ "Manage install queue"
+│   ├─ npx astrobox-cli queue status                (see all tasks + progress)
+│   ├─ npx astrobox-cli queue start                 (start the queue processor)
+│   ├─ npx astrobox-cli queue stop                  (stop the queue processor)
+│   └─ npx astrobox-cli queue remove <path>         (remove a task)
 │
 ├─ "Browse providers / categories"
 │   ├─ npx astrobox-cli provider list
@@ -74,6 +82,11 @@ User request
 | Item detail | `npx astrobox-cli provider item <name> <id>` |
 | Get download URL | `npx astrobox-cli provider download <name> --id <id> --device <key>` |
 | Install local file | `npx astrobox-cli install <path>` |
+| Install with live progress | `npx astrobox-cli install <path> --wait` |
+| Check install queue | `npx astrobox-cli queue status` |
+| Start queue processor | `npx astrobox-cli queue start` |
+| Stop queue processor | `npx astrobox-cli queue stop` |
+| Remove from queue | `npx astrobox-cli queue remove <path>` |
 
 For full options on each command, see `references/commands.md`.
 
@@ -154,8 +167,20 @@ The text in parentheses (`xmb9p`) is the device key you pass to `--device`. Don'
 ### Authkey from `device show`
 If a device is already saved but disconnected, `device show <addr>` reveals its stored authkey. You can use it to reconnect without asking the user.
 
-### Install returns "queued"
-`install` returns `{"ok": true, "message": "queued"}` — the transfer happens asynchronously. Check the physical device screen for install progress, not the CLI output.
+### Install is async — use `--wait` or `queue status` for progress
+By default `install` returns immediately with `{"ok": true, "message": "queued"}` — the transfer happens asynchronously.
+
+To watch progress in real time, add `--wait`:
+```bash
+npx astrobox-cli install ./app.rpk --wait
+```
+This polls the queue every second and shows a live progress table. When it reaches 100%, you see `Installation completed successfully.`
+
+To check queue state after installation (or at any time):
+```bash
+npx astrobox-cli queue status
+```
+Shows all tasks with name, type, progress %, status (`running` / `error` / `completed`), and description.
 
 ### npx concurrency = fragile
 Running multiple `npx astrobox-cli` commands at the same time can trigger npm cache conflicts (`ENOTEMPTY`). Run commands **sequentially**, not in parallel. If you hit this error:

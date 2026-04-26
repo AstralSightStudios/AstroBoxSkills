@@ -170,6 +170,30 @@ quick_app
 
 ---
 
+## `queue status` output
+
+```
+Install: running (45%)
+
+Name                 | Type         | Progress   | Status     | Description
+---------------------+--------------+------------+------------+---------------------
+Cool Watchface       | watchface    | 45%        | running    | Installing...
+```
+
+**Parse:**
+- First line: `<queue>: <state> (<progress>%)`
+- Header line: column names separated by `|`
+- Separator: `-+-...`
+- Data lines: split on `|` and trim each field
+- Columns: `Name`, `Type`, `Progress`, `Status`, `Description`
+
+Pattern per data line:
+```
+(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+)
+```
+
+---
+
 ## Error output format
 
 All errors go to stderr and follow this format:

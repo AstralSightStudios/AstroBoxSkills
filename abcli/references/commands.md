@@ -56,18 +56,26 @@ Devices: 2
 
 ## `install`
 
-Install a local resource file through AstroBox onto a connected device.
+Install a local resource file through AstroBox onto a connected device. This is a convenience alias for `queue install`.
 
 ```bash
+# Queue installation (async)
 npx astrobox-cli install ./app.rpk
 npx astrobox-cli install /absolute/path/to/file.bin
+
+# Queue and wait for completion with live progress
+npx astrobox-cli install ./app.rpk --wait
+
 npx astrobox-cli install --help
 ```
 
 **Arguments:**
 - `<path>` — Path to local file, resolved from current working directory
 
-**Output:** JSON response indicating the install has been queued.
+**Options:**
+- `--wait` — Poll the queue every second and display a live progress table until installation completes or fails
+
+**Output (without --wait):** JSON response indicating the install has been queued.
 ```json
 {
   "ok": true,
@@ -75,7 +83,14 @@ npx astrobox-cli install --help
 }
 ```
 
-The actual file transfer happens asynchronously — check the physical device screen for progress.
+**Output (with --wait):** Live progress table showing percentage and status.
+
+```
+Install progress: 45%
+Name                 | Type      | Progress | Status  | Description
+---------------------+-----------+----------+---------+---------------------
+My App               | quick_app | 45%      | running | Installing...
+```
 
 ---
 
@@ -158,6 +173,82 @@ Connected to <name> (<addr>)
 ```
 
 > **Note:** A success message means **AstroBox accepted the request**. The user still needs to tap **Confirm** on their physical device within a few seconds to complete the Bluetooth pairing.
+---
+
+## `queue status`
+
+Show current install queue state — all tasks, their progress, and status.
+
+```bash
+npx astrobox-cli queue status
+npx astrobox-cli queue status --help
+```
+
+**Output:** A table showing each queued task.
+```
+Install: running (45%)
+
+Name                 | Type         | Progress   | Status     | Description
+---------------------+--------------+------------+------------+---------------------
+Cool Watchface       | watchface    | 45%        | running    | Installing...
+```
+
+Possible queue states: `pending`, `running`, `completed`, `error`.
+Possible task statuses: `pending`, `running`, `completed`, `error`.
+
+If a task enters `error` status, the error description is shown and the exit code is non-zero.
+
+---
+
+## `queue install`
+
+Add a file to the install queue. Alias of `install`.
+
+```bash
+npx astrobox-cli queue install ./app.rpk
+npx astrobox-cli queue install ./app.rpk --wait
+```
+
+**Arguments:**
+- `<path>` — Path to local file
+
+**Options:**
+- `--wait` — Poll and show live progress (same as `install --wait`)
+
+---
+
+## `queue start`
+
+Start the install queue processor (if it was stopped).
+
+```bash
+npx astrobox-cli queue start
+```
+
+---
+
+## `queue stop`
+
+Stop the install queue processor.
+
+```bash
+npx astrobox-cli queue stop
+```
+
+---
+
+## `queue remove`
+
+Remove a task from the queue by file path.
+
+```bash
+npx astrobox-cli queue remove ./app.rpk
+# Remove from download queue instead of install queue
+npx astrobox-cli queue remove ./app.rpk --queue download
+```
+
+**Options:**
+- `--queue <queue>` — Which queue to remove from: `install` (default) or `download`
 
 ---
 

@@ -89,6 +89,24 @@ Common errors, what they mean, and how to recover.
 2. Retry the command.
 3. Avoid running multiple `npx astrobox-cli` commands in parallel when possible.
 
+---
+
+## `Install error: 没有已连接的设备，请先连接设备`
+
+**Meaning:** The install was queued but there is no connected device to receive the file.
+
+**Recovery:**
+1. Check device status: `npx astrobox-cli status`
+2. If saved devices are disconnected, reconnect one:
+   ```bash
+   npx astrobox-cli device show <addr>
+   npx astrobox-cli device connect --name "<name>" --addr "<addr>" --authkey "<key>"
+   ```
+3. The user must tap confirm on their physical device.
+4. Retry the install.
+
+---
+
 ## General troubleshooting checklist
 
 1. **Is AstroBox running?** → `npx astrobox-cli status`
