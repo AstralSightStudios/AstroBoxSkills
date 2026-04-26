@@ -152,7 +152,6 @@ One name per line:
 ```
 OfficialV2
 BandBBS
-MiFitness
 ```
 
 **Parse:** `stdout.trim().split('\n')`

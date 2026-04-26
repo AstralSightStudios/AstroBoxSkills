@@ -2,6 +2,10 @@
 
 Complete reference for every abcli command. All examples use `npx astrobox-cli`.
 
+Global options (apply to all commands):
+- `--help` — Show command help
+- `-v, --verbose` — Verbose output (for debugging)
+
 ---
 
 ## `open`
@@ -11,6 +15,7 @@ Launch AstroBox via the `astrobox://` protocol URL.
 ```bash
 npx astrobox-cli open
 npx astrobox-cli open --url astrobox://workspace
+npx astrobox-cli open --help
 ```
 
 **Options:**
@@ -29,6 +34,7 @@ Query AstroBox connection status and list connected devices.
 
 ```bash
 npx astrobox-cli status
+npx astrobox-cli status --help
 ```
 
 **Output format:**
@@ -50,18 +56,18 @@ Devices: 2
 
 ## `install`
 
-Install a local resource file through AstroBox.
+Install a local resource file through AstroBox onto a connected device.
 
 ```bash
 npx astrobox-cli install ./app.rpk
 npx astrobox-cli install /absolute/path/to/file.bin
+npx astrobox-cli install --help
 ```
 
 **Arguments:**
 - `<path>` — Path to local file, resolved from current working directory
 
 **Output:** JSON response indicating the install has been queued.
-
 ```json
 {
   "ok": true,
@@ -69,7 +75,7 @@ npx astrobox-cli install /absolute/path/to/file.bin
 }
 ```
 
-The actual file transfer happens asynchronously. Check the physical device screen for progress indicators.
+The actual file transfer happens asynchronously — check the physical device screen for progress.
 
 ---
 
@@ -84,21 +90,21 @@ npx astrobox-cli device list
 **Output format:**
 ```
 Devices: <count>
-- <name> (<addr>) [<status>]
+- <name> (<addr>) [<connected|disconnected>]
 ```
 
 ---
 
 ## `device show`
 
-Show full details for a device by MAC address.
+Show full details for a saved device by MAC address.
 
 ```bash
 npx astrobox-cli device show 3C:AF:B7:ED:C6:92
 ```
 
 **Arguments:**
-- `<addr>` — Device MAC address
+- `<addr>` — Device MAC address (must be in saved device list)
 
 **Output format:**
 ```
@@ -111,11 +117,22 @@ TX Win:   <txWinOverrunAllowance>
 Type:     <connectType>
 ```
 
+**Field mappings:**
+| Label | Property |
+|-------|----------|
+| `Name` | device name |
+| `Address` | MAC address |
+| `AuthKey` | auth key (used for reconnect) |
+| `Status` | connection state |
+| `SAR Ver` | SAR protocol version |
+| `TX Win` | TX window overrun allowance |
+| `Type` | connect type (`SPP` or `BLE`) |
+
 ---
 
 ## `device connect`
 
-Add and connect a new device. The user must tap confirm on their physical device.
+Add and connect a new device. The user must tap confirm on their physical device for the Bluetooth bond to complete.
 
 ```bash
 npx astrobox-cli device connect \
@@ -125,9 +142,9 @@ npx astrobox-cli device connect \
 ```
 
 **Required options:**
-- `--name <name>` — Device name
+- `--name <name>` — Device display name
 - `--addr <addr>` — Device MAC address
-- `--authkey <authkey>` — Device auth key
+- `--authkey <authkey>` — Auth key (user must provide this; visible in device settings)
 
 **Optional options:**
 - `--sarVersion <version>` — SAR version (default: `2`)
@@ -140,13 +157,13 @@ Connecting...
 Connected to <name> (<addr>)
 ```
 
-**Note:** The success message means the request was accepted by AstroBox. The user still needs to tap confirm on their device to complete the Bluetooth pairing.
+> **Note:** A success message means **AstroBox accepted the request**. The user still needs to tap **Confirm** on their physical device within a few seconds to complete the Bluetooth pairing.
 
 ---
 
 ## `provider list`
 
-List all available resource providers.
+List all registered resource providers.
 
 ```bash
 npx astrobox-cli provider list
@@ -156,7 +173,6 @@ npx astrobox-cli provider list
 ```
 OfficialV2
 BandBBS
-MiFitness
 ```
 
 ---
@@ -176,14 +192,13 @@ npx astrobox-cli provider state OfficialV2
 ```
 Ready
 ```
-
-Possible states: `Ready`, `Updating`, `Failed(...)`
+Possible states: `Ready`, `Updating`, `Failed(<reason>)`
 
 ---
 
 ## `provider categories`
 
-Get the category list for a provider.
+Get the category list that a provider supports.
 
 ```bash
 npx astrobox-cli provider categories OfficialV2
@@ -204,7 +219,7 @@ REDMI Watch 5
 
 ## `provider refresh`
 
-Refresh a provider's cache.
+Refresh a provider's cache — fetches the latest catalog from the remote source.
 
 ```bash
 npx astrobox-cli provider refresh OfficialV2
@@ -245,12 +260,17 @@ npx astrobox-cli provider total OfficialV2
 
 ## `provider page`
 
-Get paginated content from a provider.
+Get paginated content from a provider — optionally filtered by keyword, category, and sorted.
 
 ```bash
+# Browse all items
 npx astrobox-cli provider page OfficialV2
-npx astrobox-cli provider page OfficialV2 --page 1 --limit 10 --category watchface --sort time
-npx astrobox-cli provider page OfficialV2 --keyword "miku" --sort name
+
+# Paginated + filtered by category + sorted
+npx astrobox-cli provider page OfficialV2 --page 2 --limit 10 --category watchface --sort time
+
+# Search by keyword (preferred over piping through grep)
+npx astrobox-cli provider page OfficialV2 --keyword "miku" --limit 5 --sort name
 ```
 
 **Arguments:**
@@ -258,10 +278,10 @@ npx astrobox-cli provider page OfficialV2 --keyword "miku" --sort name
 
 **Options:**
 - `--page <page>` — Page number (default: `1`)
-- `--limit <limit>` — Items per page (default: `20`)
-- `--keyword <keyword>` — Search keyword (preferred over piping through grep)
-- `--category <category>` — Comma-separated category filter
-- `--sort <sort>` — Sort order: `time`, `name`, or `random` (default: `time`)
+- `--limit <limit>` — Items per page (default: `20`, max depends on provider)
+- `--keyword <keyword>` — Search keyword. **Use this instead of grep** — the server-side filter catches results across all pages
+- `--category <category>` — Comma-separated category filter (get available categories via `provider categories`)
+- `--sort <sort>` — Sort order: `time`, `name`, `random` (default: `time`)
 
 **Output format:**
 ```
@@ -277,7 +297,7 @@ Page <page> · <count> items
 
 ## `provider item`
 
-Get detailed information about a specific resource item.
+Get detailed information about a specific resource item, including its description, author, external links, and available download variants.
 
 ```bash
 npx astrobox-cli provider item OfficialV2 979808740400
@@ -285,7 +305,7 @@ npx astrobox-cli provider item OfficialV2 979808740400
 
 **Arguments:**
 - `<name>` — Provider name
-- `<id>` — Resource ID
+- `<id>` — Resource ID (from `provider page` output)
 
 **Output format:**
 ```
@@ -302,17 +322,30 @@ Downloads:
     file: <file_name>
 ```
 
+The `Downloads:` section lists each device variant with a **key** (e.g., `xmb9p`). This key is what you pass to `provider download --device`.
+
 ---
 
 ## `provider download`
 
-Resolve the download link for a resource item.
+Resolve the download URL for a resource item for a specific device.
 
 ```bash
+# With --device key (from provider item Downloads section)
+npx astrobox-cli provider download OfficialV2 \
+  --id 979885362176 \
+  --device xmb9p
+
+# With explicit --downloadKey (alternative to --device)
+npx astrobox-cli provider download OfficialV2 \
+  --id 979885362176 \
+  --downloadKey xmb9p
+
+# Trial download (for free/preview items)
 npx astrobox-cli provider download OfficialV2 \
   --id 979885362176 \
   --device xmb9p \
-  --downloadKey xmb9p
+  --trial
 ```
 
 **Arguments:**
@@ -320,9 +353,9 @@ npx astrobox-cli provider download OfficialV2 \
 
 **Options:**
 - `--id <id>` — Resource ID (required)
-- `--downloadKey <key>` — Download entry key
-- `--device <device>` — Device key (required for some OfficialV2 items)
-- `--trial` — Trial download flag (default: false)
+- `--downloadKey <key>` — Download entry key (from `provider item` Downloads section)
+- `--device <device>` — Device key (alias for `--downloadKey`, required for some OfficialV2 items)
+- `--trial` — Request trial/preview download (default: false)
 
 **Output format:**
 ```
@@ -331,3 +364,5 @@ npx astrobox-cli provider download OfficialV2 \
   file:    <file_name>
   url:     <download_url>
 ```
+
+The `url` field contains the actual download URL. Some URLs may contain spaces — URL-encode them before passing to `curl`.

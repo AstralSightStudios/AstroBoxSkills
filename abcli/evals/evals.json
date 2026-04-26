@@ -1,0 +1,48 @@
+{
+  "skill_name": "abcli",
+  "description": "Test cases for the abcli (AstroBox CLI) skill — all evaluatable without a running AstroBox instance. Tests focus on command selection, workflow construction, output parsing guidance, and error recovery knowledge.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "status-check-with-output-parse",
+      "prompt": "用户说：帮我看看 AstroBox 状态怎么样。\n\n假设 npx astrobox-cli status 返回：\n```\nAstroBox: connected\nDevices: 2\n- Xiaomi Smart Band 9 Pro C692 (3C:AF:B7:ED:C6:92) [connected]\n- Galaxy S23 (A1:B2:C3:D4:E5:F6) [disconnected]\n```\n\n你应该教用户用什么命令？怎么解析这个输出？解释每部分的意思。",
+      "expected_output": "Uses the correct command (npx astrobox-cli status), explains each field: AstroBox connection state, device count, device name/address/status per device. Does NOT invent non-existent commands or options.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "search-download-install-workflow",
+      "prompt": "用户说：帮我在 OfficialV2 里找个叫「矩」的表盘，下到我的 Xiaomi Band 9 Pro 上。\n\n假设 abcli 命令执行结果如下：\n- provider refresh OfficialV2 → 成功\n- provider page OfficialV2 --keyword 矩 --limit 20 → 返回1个结果，id 是 979805910807\n- provider item OfficialV2 979805910807 → Downloads 里有 (xmb9p)\n- provider download OfficialV2 --id 979805910807 --device xmb9p → 返回一个下载URL\n\n你应该给用户展示完整的操作步骤，从刷新 provider、搜索、看详情、获取下载链接、到下载文件和安装。正确解析输出中的字段（device key 从 Downloads 来，url 从 provider download 来）。",
+      "expected_output": "Shows the complete workflow in correct order: 1) refresh, 2) page --keyword, 3) item, 4) download --device. Correctly identifies that xmb9p is the device key from the Downloads section. References device show to get authkey if device is disconnected. Includes curl download and install steps.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "new-device-connection",
+      "prompt": "用户说：帮我连一个新手环到 AstroBox，设备叫 Amazfit Band 7，地址是 AA:BB:CC:DD:EE:FF，authkey 是 abc123def456。\n\n你应该做什么？需要注意什么？",
+      "expected_output": "Uses device connect with --name, --addr, --authkey. Then uses device show to verify. Clearly explains that the user needs to tap confirm on their physical device. Uses the correct default connectType (SPP). Does NOT ask for additional info the user didn't provide.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "reconnect-disconnected-device",
+      "prompt": "用户说：我的 Xiaomi Smart Band 9 Pro 之前连过但现在断了，地址是 3C:AF:B7:ED:C6:92，帮我连回去。\n\n你应该怎么做？需要重新问用户要 authkey 吗？",
+      "expected_output": "First runs device show 3C:AF:B7:ED:C6:92 to extract the saved authkey. Then reuses that authkey in device connect. Does NOT ask the user for the authkey again (this is a key skill behavior).",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "error-recovery-npx-conflict",
+      "prompt": "用户说：我跑 abcli 的时候报错了，提示说什么 ENOTEMPTY，npm cache 有问题。该怎么办？为什么会这样？",
+      "expected_output": "Explains this is from concurrent npx processes (npx cache conflict). Recommends clearing ~/.npm/_npx/* and retrying one command at a time. Can optionally mention the run_abcli.py helper script. Does NOT tell the user to reinstall Node.js or suggest unrelated fixes.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "provider-browsing-with-categories",
+      "prompt": "用户说：看看 OfficialV2 里 watchface 分类有哪些表盘。\n\n你应该用什么命令？要不要先刷新？为什么？",
+      "expected_output": "Recommends provider refresh OfficialV2 first (because provider caches can be stale). Then provider categories OfficialV2 to verify watchface is a valid category. Then provider page OfficialV2 --category watchface --limit 20. Explains WHY refresh is needed before searching (cache freshness). Uses --category filter, NOT piping through grep.",
+      "files": []
+    }
+  ]
+}

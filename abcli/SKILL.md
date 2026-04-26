@@ -1,45 +1,62 @@
 ---
 name: abcli
-description: Interact with AstroBox through the command-line interface. Use this skill whenever the user wants to control AstroBox, manage devices, browse providers, download resources, install files, or check connection status. If the task involves AstroBox operations, ALWAYS use abcli via npx instead of trying to manipulate AstroBox internals directly. Trigger on mentions of AstroBox, device connection, authkey, provider browsing, resource download, watchface/app installation, or anything related to managing the AstroBox desktop app.
+Control AstroBox via its official CLI (npx astrobox-cli). Trigger on: device connection/pairing, searching/downloading/installing watchfaces & apps from providers (e.g., OfficialV2, BandBBS), checking status, refreshing caches, fixing npx ENOTEMPTY errors, or any mention of authkey/provider/device MAC. ALWAYS prefer abcli over direct AstroBox internals. Do NOT trigger on band app development, custom firmware, hardware specs, or general npm errors unrelated to astrobox-cli.
 ---
 
 # abcli — AstroBox CLI
 
-abcli is the official command-line interface for AstroBox. Any task that involves controlling or querying AstroBox should go through abcli rather than direct file manipulation or API calls.
+abcli (`astrobox-cli`) is the official CLI for [AstroBox](https://astrobox.online). Use it for **any** task that involves controlling or querying AstroBox — never manipulate AstroBox internals directly.
 
-## Installation
-
-abcli is distributed on npm as `astrobox-cli`. **Always run it via npx** — no global installation needed:
+## Quick start
 
 ```bash
+# Run via npx (no install needed)
 npx astrobox-cli <command> [options]
+
+# Or use local binary in the AstroBoxCli repo
+pnpm cli <command> [options]
 ```
 
-If the user has it installed locally in the project, use the local binary:
+Requires Node.js >= 20 and the AstroBox desktop app running on `127.0.0.1:10721`.
 
+To avoid npm cache conflicts when running multiple commands, use the bundled helper:
 ```bash
-pnpm cli <command>   # if in AstroBoxCli repo
+python scripts/run_abcli.py <command> [options]
+```
+This automatically retries on ENOTEMPTY errors from npx concurrency.
+
+## Decision tree: How to route a user request
+
+When a user asks for something AstroBox-related, follow this flow to decide which commands to use:
+
+```
+User request
+│
+├─ "Show me devices / status"
+│   └─ npx astrobox-cli status
+│
+├─ "Connect/pair a new device"
+│   ├─ npx astrobox-cli device connect --name "..." --addr "..." --authkey "..."
+│   └─ User needs to tap confirm on the device
+│
+├─ "Find/download/install a watchface/app"
+│   ├─ npx astrobox-cli provider refresh OfficialV2   (cache fresh?)
+│   ├─ npx astrobox-cli provider page OfficialV2 --keyword "..."
+│   ├─ npx astrobox-cli provider item OfficialV2 <id>
+│   └─ npx astrobox-cli provider download OfficialV2 --id <id> --device <key>
+│
+├─ "Install a local file"
+│   └─ npx astrobox-cli install <path>
+│
+├─ "Browse providers / categories"
+│   ├─ npx astrobox-cli provider list
+│   └─ npx astrobox-cli provider categories <name>
+│
+└─ "Troubleshoot / what's wrong?"
+    └─ npx astrobox-cli status → check error catalog
 ```
 
-Requires Node.js >= 20 and the AstroBox desktop app to be running.
-
-## When to use
-
-Use abcli for **any** AstroBox-related task:
-
-- Launching AstroBox (`open`)
-- Checking if AstroBox is running / listing connected devices (`status`)
-- Managing saved devices: list, show details, connect new ones (`device`)
-- Browsing resource providers: list providers, check state, categories, refresh (`provider`)
-- Searching/filtering resources by page, keyword, category, sort (`provider page`)
-- Getting resource details and download links (`provider item`, `provider download`)
-- Installing local resource files (`install`)
-
-Do **not** use abcli when:
-- AstroBox is not installed or not running (API at `127.0.0.1:10721` will be unreachable)
-- The user explicitly asks to edit AstroBox source code or config files directly
-
-## Quick reference
+## Quick command reference
 
 | Task | Command |
 |------|---------|
@@ -53,106 +70,124 @@ Do **not** use abcli when:
 | Categories | `npx astrobox-cli provider categories <name>` |
 | Refresh provider | `npx astrobox-cli provider refresh <name>` |
 | Total items | `npx astrobox-cli provider total <name>` |
-| Browse page | `npx astrobox-cli provider page <name> --category ... --sort time` |
-| Search by keyword | `npx astrobox-cli provider page <name> --keyword <keyword>` |
+| Browse/Search page | `npx astrobox-cli provider page <name> --keyword ... --category ...` |
 | Item detail | `npx astrobox-cli provider item <name> <id>` |
-| Download link | `npx astrobox-cli provider download <name> --id <id> --device <key>` |
+| Get download URL | `npx astrobox-cli provider download <name> --id <id> --device <key>` |
 | Install local file | `npx astrobox-cli install <path>` |
+
+For full options on each command, see `references/commands.md`.
 
 ## Core workflows
 
 ### Workflow: Connect a new device
 
 ```bash
-npx astrobox-cli device list                          # see existing devices
-npx astrobox-cli device connect \
-  --name "Xiaomi Smart Band 9 Pro C692" \
-  --addr "3C:AF:B7:ED:C6:92" \
-  --authkey "your-authkey"                            # user must tap confirm on device
-npx astrobox-cli device show 3C:AF:B7:ED:C6:92      # verify
+npx astrobox-cli device list                          # see existing devices first
+npx astrobox-cli device connect --name "Band 9 Pro" --addr "3C:AF:B7:ED:C6:92" --authkey "the-key"
+# ↳ User must tap confirm on their physical device!
+npx astrobox-cli device show 3C:AF:B7:ED:C6:92       # verify connection
 ```
 
-### Workflow: Find and download a resource
+### Workflow: Full resource install (search → download → install)
 
 ```bash
-npx astrobox-cli provider list                        # pick provider
-npx astrobox-cli provider refresh OfficialV2          # refresh cache before search
-npx astrobox-cli provider page OfficialV2 \
-  --keyword "search-term" --limit 20                 # search by keyword
-npx astrobox-cli provider item OfficialV2 <id>        # inspect details, get device key
-npx astrobox-cli provider download OfficialV2 \
-  --id <id> --device <key>                           # get download URL
-```
-
-### Workflow: Full install (search → download → install)
-
-```bash
-# 1. Check AstroBox and list devices
+# 1. Health check
 npx astrobox-cli status
 npx astrobox-cli device list
 
-# 2. If device is disconnected, get authkey from saved device and reconnect
-npx astrobox-cli device show <addr>                   # extracts authkey
-npx astrobox-cli device connect \
-  --name "<name>" --addr "<addr>" --authkey "<key>"
+# 2. If device is disconnected but saved, extract authkey and reconnect
+npx astrobox-cli device show <addr>                   # to get the authkey
+npx astrobox-cli device connect --name "<name>" --addr "<addr>" --authkey "<key>"
 
-# 3. Search, download, and install the resource
+# 3. Refresh provider cache — this avoids stale search results
 npx astrobox-cli provider refresh OfficialV2
-npx astrobox-cli provider page OfficialV2 --keyword "<name>" --limit 20
-npx astrobox-cli provider item OfficialV2 <id>        # note the device key from Downloads
-npx astrobox-cli provider download OfficialV2 \
-  --id <id> --device <key>
 
-# 4. Download the file (url may need URL-encoding for spaces)
+# 4. Search for the resource
+npx astrobox-cli provider page OfficialV2 --keyword "miku" --limit 20
+
+# 5. Get item details — note the device key from Downloads section
+npx astrobox-cli provider item OfficialV2 <id>
+
+# 6. Resolve download URL (use the device key from step 5)
+npx astrobox-cli provider download OfficialV2 --id <id> --device <key>
+
+# 7. Download the file (may need URL-encoding for spaces in URL)
 curl -L -o "resource.bin" "<download-url>"
 
-# 5. Install through AstroBox
+# 8. Install through AstroBox
 npx astrobox-cli install "./resource.bin"
 ```
 
-### Workflow: Check AstroBox health
+### Workflow: Just find download links (no install)
 
 ```bash
-npx astrobox-cli status                               # should show "AstroBox: connected"
+npx astrobox-cli provider refresh OfficialV2
+npx astrobox-cli provider page OfficialV2 --keyword "search" --limit 20
+npx astrobox-cli provider item OfficialV2 <id>        # find right device key
+npx astrobox-cli provider download OfficialV2 --id <id> --device <key>
+# Return the url field to the user
 ```
 
-If it shows `unavailable`, tell the user to launch AstroBox first.
+### Workflow: Troubleshooting
 
-## Parsing output
+```bash
+npx astrobox-cli status
+# If it shows "unavailable" → ask user to launch AstroBox desktop app
+# If device is disconnected → reconnect using saved authkey
+```
 
-abcli outputs plain text, not JSON. Read `references/output-parsing.md` for field extraction patterns.
+## Critical notes (why they matter)
 
-Key patterns:
+### Refresh before searching
+Provider caches can be stale. Refresh populates the latest catalog **before** you search, so `--keyword` finds results that actually exist. Always do `provider refresh <name>` before using `--keyword`, especially for OfficialV2.
+
+### Use `--keyword` flag, not grep
+The built-in `--keyword` filter searches on the server side. Piping through `grep` only filters what's already been returned — you'll miss results on other pages. Always use `--keyword` with keyword searches.
+
+### Device key comes from `provider item`
+When you run `provider item`, the output has a `Downloads:` section with entries like:
+```
+Xiaomi Smart Band 9 Pro (xmb9p)
+```
+The text in parentheses (`xmb9p`) is the device key you pass to `--device`. Don't guess — extract it from the item details.
+
+### Authkey from `device show`
+If a device is already saved but disconnected, `device show <addr>` reveals its stored authkey. You can use it to reconnect without asking the user.
+
+### Install returns "queued"
+`install` returns `{"ok": true, "message": "queued"}` — the transfer happens asynchronously. Check the physical device screen for install progress, not the CLI output.
+
+### npx concurrency = fragile
+Running multiple `npx astrobox-cli` commands at the same time can trigger npm cache conflicts (`ENOTEMPTY`). Run commands **sequentially**, not in parallel. If you hit this error:
+```bash
+rm -rf ~/.npm/_npx/*
+```
+Then retry one at a time.
+
+## Output parsing
+
+abcli outputs plain text, not JSON. See `references/output-parsing.md` for detailed regex patterns.
+
+Key patterns at a glance:
 - **Device lines**: `- <name> (<addr>) [<status>]`
 - **Page items**: `[<restype>] <name>\n  id: <id>`
 - **Provider download**: `  <field>: <value>`
-
-## Important notes
-
-- **Always refresh before searching**: `provider refresh <name>` before using `--keyword`, especially for OfficialV2. Provider caches can be stale.
-- **Use `--keyword` for name searches**: Do NOT pipe `provider page` through `grep`. Use the built-in `--keyword` flag.
-- **Get authkey from `device show`**: If a device is already saved but disconnected, `device show <addr>` reveals its authkey. No need to ask the user.
-- **Device key comes from `provider item`**: The `Downloads:` section lists device keys like `xmb9p`, `xmb10`, `xmrw5`. Use the correct one in `provider download --device <key>`.
-- **Install returns "queued"**: `npx astrobox-cli install` outputs `{"ok": true, "message": "queued"}`. The actual transfer happens asynchronously. Check the device screen for progress.
-- **npx concurrency**: Running multiple `npx astrobox-cli` commands simultaneously can cause npm cache conflicts (`ENOTEMPTY`). If this happens, clear `~/.npm/_npx/*` and retry.
+- **Error format**: `Error: <message>` on stderr, exit code 1
 
 ## Error handling
 
-| Error | Meaning | Action |
-|-------|---------|--------|
+| Error | Likely cause | Quick action |
+|-------|-------------|--------------|
 | `Could not reach AstroBox...` | Desktop app not running | Ask user to launch AstroBox |
-| `File does not exist: <path>` | Invalid install path | Verify path |
-| `Device not found: <addr>` | Address not in list | Run `device list` first |
-| `Invalid connectType: ...` | Wrong type | Only `SPP` or `BLE` |
+| `File does not exist:` | Wrong install path | Verify path with user |
+| `Device not found:` | Wrong address | Run `device list` first |
+| `Invalid connectType:` | Wrong type flag | Use `SPP` or `BLE` |
+| `ENOTEMPTY` cache errors | npx concurrency | `rm -rf ~/.npm/_npx/*` then retry |
 
-See `references/errors.md` for the full error catalog.
-
-## Command details
-
-For per-command usage, arguments, options, and output examples, read `references/commands.md`.
+See `references/errors.md` for the full catalog with recovery steps.
 
 ## Reference index
 
-- `references/commands.md` — Full command reference
-- `references/output-parsing.md` — Output format parsing guide
-- `references/errors.md` — Error catalog and recovery steps
+- `references/commands.md` — Full per-command reference with all options
+- `references/output-parsing.md` — Output parsing patterns (regex, field extraction)
+- `references/errors.md` — Complete error catalog with recovery strategies
