@@ -1,74 +1,64 @@
 {
   "skill_name": "abcli",
-  "description": "Focused eval on device connection workflows for AstroBox CLI",
+  "description": "Focused eval on device connection workflows for AstroBox CLI. DO NOT execute any real abcli commands — this is a simulation.",
   "evals": [
     {
       "id": 1,
       "name": "reconnect-and-install",
-      "prompt": "我上次连过那个小米手环9 Pro，现在断了，我想重新连上然后装个表盘上去，你帮我搞一下",
-      "expected_output": "",
+      "prompt": "【这是模拟场景，不要执行任何真实命令】\n\n假设 AstroBox 已经连上了我的小米手环9 Pro。我想装个表盘上去，具体怎么操作？一步步告诉我该用什么命令，以及每一步的注意事项。",
+      "expected_output": "Explain the full workflow: provider refresh → page --keyword → provider item → provider download → curl download → install. Explain how to parse each output.",
       "assertions": [
-        {
-          "name": "list-devices-first",
-          "text": "device list",
-          "type": "contains"
-        },
-        {
-          "name": "extract-authkey-from-show",
-          "text": "device show",
-          "type": "contains"
-        },
-        {
-          "name": "reuses-authkey-from-show",
-          "text": "authkey",
-          "type": "contains"
-        },
-        {
-          "name": "reconnect-command",
-          "text": "device connect",
-          "type": "contains"
-        },
-        {
-          "name": "remind-tap-confirm",
-          "text": "确认",
-          "type": "contains"
-        },
         {
           "name": "refresh-before-search",
           "text": "refresh",
           "type": "contains"
         },
         {
-          "name": "search-resource",
-          "text": "provider page",
+          "name": "keyword-search",
+          "text": "--keyword",
           "type": "contains"
         },
         {
-          "name": "install-resource",
+          "name": "item-detail",
+          "text": "provider item",
+          "type": "contains"
+        },
+        {
+          "name": "download-url",
+          "text": "provider download",
+          "type": "contains"
+        },
+        {
+          "name": "install-command",
           "text": "install",
+          "type": "contains"
+        },
+        {
+          "name": "device-key-explanation",
+          "text": "device",
           "type": "contains"
         }
       ]
     },
     {
       "id": 2,
-      "name": "check-devices-then-connect",
-      "prompt": "帮我看看 AstroBox 现在有哪些设备，我想把那个小米手环9连上装个天气应用",
-      "expected_output": "",
+      "name": "reconnect-disconnected",
+      "prompt": "【这是模拟场景，不要执行任何真实命令】\n\n假设我的小米手环9 Pro之前连过但现在断了，我想重新连回去。但是我不记得 authkey 了。应该怎么做？",
+      "expected_output": "Explain that device show <addr> reveals the saved authkey, then use device connect with that authkey. Don't ask the user for authkey.",
       "assertions": [
         {
-          "name": "check-status-first",
-          "text": "status",
-          "type": "contains"
-        },
-        {
-          "name": "list-devices",
+          "name": "device-list-first",
           "text": "device list",
           "type": "contains"
         },
         {
-          "name": "show-device-for-authkey",
+          "name": "extract-authkey",
           "text": "device show",
+          "type": "contains"
+        },
+        {
+          "name": "reuse-authkey",
+          "text": "authkey",
           "type": "contains"
         },
         {
@@ -77,79 +67,59 @@
           "type": "contains"
         },
         {
-          "name": "tap-confirm",
+          "name": "confirm-on-device",
           "text": "确认",
           "type": "contains"
         },
         {
-          "name": "refresh-provider",
-          "text": "refresh",
-          "type": "contains"
-        },
-        {
-          "name": "search-keyword",
-          "text": "--keyword",
-          "type": "contains"
-        },
-        {
-          "name": "download-and-install",
-          "text": "install",
+          "name": "no-ask-user",
+          "text": "不需要",
           "type": "contains"
         }
       ]
     },
     {
       "id": 3,
-      "name": "reconnect-then-browse",
-      "prompt": "我手环断了连不上了，想先连回去再看看有什么新表盘可以装",
-      "expected_output": "",
+      "name": "browse-new-watchfaces",
+      "prompt": "【这是模拟场景，不要执行任何真实命令】\n\n设备已经连好了，我想看看 OfficialV2 里最近有什么新表盘可以装。具体该用什么命令？",
+      "expected_output": "Explain provider refresh first (cache may be stale), then provider page OfficialV2 --sort time --category watchface with limit. Explain why refresh is needed.",
       "assertions": [
         {
-          "name": "list-devices-first",
-          "text": "device list",
+          "name": "refresh-first",
+          "text": "refresh",
           "type": "contains"
         },
         {
-          "name": "show-device-for-authkey",
-          "text": "device show",
+          "name": "explain-cache-reason",
+          "text": "缓存",
           "type": "contains"
         },
         {
-          "name": "reconnect",
-          "text": "device connect",
-          "type": "contains"
-        },
-        {
-          "name": "tap-confirm",
-          "text": "确认",
-          "type": "contains"
-        },
-        {
-          "name": "browse-provider",
+          "name": "page-command",
           "text": "provider page",
           "type": "contains"
         },
         {
-          "name": "search-with-keyword",
-          "text": "--keyword",
+          "name": "category-filter",
+          "text": "--category",
+          "type": "contains"
+        },
+        {
+          "name": "sort-by-time",
+          "text": "--sort",
           "type": "contains"
         }
       ]
     },
     {
       "id": 4,
-      "name": "connection-failed-recovery",
-      "prompt": "我刚刚想连手环，但是报错了说连接超时，你帮我看看怎么回事",
-      "expected_output": "",
+      "name": "connection-timeout-error",
+      "prompt": "【这是模拟场景，不要执行任何真实命令】\n\n我运行 device connect 的时候报错了，说 \"Failed to connect: timeout\"。可能是什么原因？该怎么排查？",
+      "expected_output": "Check authkey correctness, check device is in pairing mode, check if AstroBox is running, check if user needs to tap confirm on device.",
       "assertions": [
         {
           "name": "check-status",
           "text": "status",
-          "type": "contains"
-        },
-        {
-          "name": "list-devices",
-          "text": "device list",
           "type": "contains"
         },
         {
@@ -158,7 +128,7 @@
           "type": "contains"
         },
         {
-          "name": "check-pairing-mode",
+          "name": "check-pairing",
           "text": "配对",
           "type": "contains"
         },
@@ -171,22 +141,40 @@
     },
     {
       "id": 5,
-      "name": "status-and-device-details",
-      "prompt": "帮我查一下 AstroBox 的状态，然后看看我那个小米手环9 Pro的详细信息",
-      "expected_output": "",
+      "name": "install-with-progress",
+      "prompt": "【这是模拟场景，不要执行任何真实命令】\n\n我已经下好了一个 .rpk 文件，想装到设备上，而且想看安装进度。该用什么命令？",
+      "expected_output": "Use install <path> --wait for live progress, or install <path> for async queue then queue status to check. Explain what --wait does and the queue status output format.",
       "assertions": [
         {
-          "name": "check-status",
-          "text": "status",
+          "name": "install-command",
+          "text": "install",
           "type": "contains"
         },
         {
-          "name": "list-devices",
-          "text": "device list",
+          "name": "wait-flag",
+          "text": "--wait",
           "type": "contains"
         },
         {
-          "name": "show-device-details",
+          "name": "queue-status",
+          "text": "queue",
+          "type": "contains"
+        },
+        {
+          "name": "progress-explanation",
+          "text": "进度",
+          "type": "contains"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "check-device-details",
+      "prompt": "【这是模拟场景，不要执行任何真实命令】\n\n我的小米手环9 Pro 已经连上了，我想看看它的详细信息，包括 authkey 和连接类型。怎么看？",
+      "expected_output": "Use device show <addr> and explain each field: Name, Address, AuthKey, Status, SAR Ver, TX Win, Type.",
+      "assertions": [
+        {
+          "name": "show-command",
           "text": "device show",
           "type": "contains"
         },
@@ -196,8 +184,13 @@
           "type": "contains"
         },
         {
-          "name": "explain-connect-type",
+          "name": "explain-type",
           "text": "Type",
+          "type": "contains"
+        },
+        {
+          "name": "explain-status",
+          "text": "Status",
           "type": "contains"
         }
       ]
