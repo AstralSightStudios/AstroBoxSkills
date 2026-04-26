@@ -1,0 +1,206 @@
+{
+  "skill_name": "abcli",
+  "description": "Focused eval on device connection workflows for AstroBox CLI",
+  "evals": [
+    {
+      "id": 1,
+      "name": "reconnect-and-install",
+      "prompt": "我上次连过那个小米手环9 Pro，现在断了，我想重新连上然后装个表盘上去，你帮我搞一下",
+      "expected_output": "",
+      "assertions": [
+        {
+          "name": "list-devices-first",
+          "text": "device list",
+          "type": "contains"
+        },
+        {
+          "name": "extract-authkey-from-show",
+          "text": "device show",
+          "type": "contains"
+        },
+        {
+          "name": "reuses-authkey-from-show",
+          "text": "authkey",
+          "type": "contains"
+        },
+        {
+          "name": "reconnect-command",
+          "text": "device connect",
+          "type": "contains"
+        },
+        {
+          "name": "remind-tap-confirm",
+          "text": "确认",
+          "type": "contains"
+        },
+        {
+          "name": "refresh-before-search",
+          "text": "refresh",
+          "type": "contains"
+        },
+        {
+          "name": "search-resource",
+          "text": "provider page",
+          "type": "contains"
+        },
+        {
+          "name": "install-resource",
+          "text": "install",
+          "type": "contains"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "check-devices-then-connect",
+      "prompt": "帮我看看 AstroBox 现在有哪些设备，我想把那个小米手环9连上装个天气应用",
+      "expected_output": "",
+      "assertions": [
+        {
+          "name": "check-status-first",
+          "text": "status",
+          "type": "contains"
+        },
+        {
+          "name": "list-devices",
+          "text": "device list",
+          "type": "contains"
+        },
+        {
+          "name": "show-device-for-authkey",
+          "text": "device show",
+          "type": "contains"
+        },
+        {
+          "name": "reconnect-connect",
+          "text": "device connect",
+          "type": "contains"
+        },
+        {
+          "name": "tap-confirm",
+          "text": "确认",
+          "type": "contains"
+        },
+        {
+          "name": "refresh-provider",
+          "text": "refresh",
+          "type": "contains"
+        },
+        {
+          "name": "search-keyword",
+          "text": "--keyword",
+          "type": "contains"
+        },
+        {
+          "name": "download-and-install",
+          "text": "install",
+          "type": "contains"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "reconnect-then-browse",
+      "prompt": "我手环断了连不上了，想先连回去再看看有什么新表盘可以装",
+      "expected_output": "",
+      "assertions": [
+        {
+          "name": "list-devices-first",
+          "text": "device list",
+          "type": "contains"
+        },
+        {
+          "name": "show-device-for-authkey",
+          "text": "device show",
+          "type": "contains"
+        },
+        {
+          "name": "reconnect",
+          "text": "device connect",
+          "type": "contains"
+        },
+        {
+          "name": "tap-confirm",
+          "text": "确认",
+          "type": "contains"
+        },
+        {
+          "name": "browse-provider",
+          "text": "provider page",
+          "type": "contains"
+        },
+        {
+          "name": "search-with-keyword",
+          "text": "--keyword",
+          "type": "contains"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "connection-failed-recovery",
+      "prompt": "我刚刚想连手环，但是报错了说连接超时，你帮我看看怎么回事",
+      "expected_output": "",
+      "assertions": [
+        {
+          "name": "check-status",
+          "text": "status",
+          "type": "contains"
+        },
+        {
+          "name": "list-devices",
+          "text": "device list",
+          "type": "contains"
+        },
+        {
+          "name": "check-authkey",
+          "text": "authkey",
+          "type": "contains"
+        },
+        {
+          "name": "check-pairing-mode",
+          "text": "配对",
+          "type": "contains"
+        },
+        {
+          "name": "remind-confirm",
+          "text": "确认",
+          "type": "contains"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "status-and-device-details",
+      "prompt": "帮我查一下 AstroBox 的状态，然后看看我那个小米手环9 Pro的详细信息",
+      "expected_output": "",
+      "assertions": [
+        {
+          "name": "check-status",
+          "text": "status",
+          "type": "contains"
+        },
+        {
+          "name": "list-devices",
+          "text": "device list",
+          "type": "contains"
+        },
+        {
+          "name": "show-device-details",
+          "text": "device show",
+          "type": "contains"
+        },
+        {
+          "name": "explain-authkey",
+          "text": "AuthKey",
+          "type": "contains"
+        },
+        {
+          "name": "explain-connect-type",
+          "text": "Type",
+          "type": "contains"
+        }
+      ]
+    }
+  ]
+}
